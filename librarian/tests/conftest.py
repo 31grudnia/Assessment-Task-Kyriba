@@ -36,9 +36,13 @@ def seeded_db(db_session):
     )
     db_session.add(header)
     db_session.flush()
+    amount_1 = 100
+    amount_2 = 200
+    total_sum = amount_1 + amount_2
 
     footer = FooterModel(
         total_counter=2,
+        control_sum=total_sum,
         header=header
     )
     db_session.add(footer)
@@ -46,14 +50,14 @@ def seeded_db(db_session):
 
     tx1 = TransactionModel(
         counter=1,
-        amount=100,
+        amount=amount_1,
         currency=Currency.USD,
         header=header,
         footer=footer
     )
     tx2 = TransactionModel(
         counter=2,
-        amount=200,
+        amount=amount_2,
         currency=Currency.EUR,
         header=header,
         footer=footer
@@ -62,4 +66,3 @@ def seeded_db(db_session):
     db_session.commit()
     
     return db_session
-
