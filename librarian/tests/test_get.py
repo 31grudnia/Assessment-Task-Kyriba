@@ -1,7 +1,7 @@
 import pytest
 
 from librarian.database.models.file import HeaderModel, FooterModel
-from librarian.src.crud import get_all_files, get_file_section, get_file_field
+from librarian.src.crud import get_all_files, get_file_by_id, get_file_section, get_file_field
 
 
 # Get all files
@@ -25,6 +25,24 @@ def test_get_all_files(seeded_db):
     assert len(file_2.transactions) == 1
     assert file_2.transactions[0].amount == 500
 
+
+# Get whole file by file id 
+def test_get_file_by_id_found(seeded_db):
+    result = get_file_by_id(seeded_db, file_id=1)
+
+    assert result is not None
+    assert result.id == 1
+    assert result.name == "John"
+
+    assert result.footer is not None
+    assert result.footer.total_counter == 2
+
+    assert len(result.transactions) == 2
+    assert result.transactions[0].amount == 100
+
+def test_get_file_by_id_not_found(seeded_db):
+    result = get_file_by_id(seeded_db, file_id=999)
+    assert result is None
 
 # Get section tests
 def test_get_file_section_header(seeded_db):
