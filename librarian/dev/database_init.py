@@ -8,7 +8,6 @@ from librarian.config import DATABASE_URL
 from librarian.database.database import Base
 from librarian.database.models.file import HeaderModel, FooterModel, TransactionModel, Currency
 
-
 logger = setup_logger("database_init")
 
 def init_db():
@@ -42,18 +41,21 @@ def init_db():
         )
         session.add(header)
         session.flush()
+        transaction_amounts = [random.randint(1000, 9999) for _ in range(3)]
+        total_sum = sum(transaction_amounts)
 
         footer = FooterModel(
-            total_counter=3,
+            total_counter=len(transaction_amounts),
+            control_sum=total_sum, 
             header=header
         )
         session.add(footer)
         session.flush()
 
-        for i in range(1, 4):
+        for i, amount in enumerate(transaction_amounts, start=1):
             tx = TransactionModel(
                 counter=i,
-                amount=random.randint(1000, 9999),
+                amount=amount,
                 currency=Currency.USD,
                 header=header,
                 footer=footer

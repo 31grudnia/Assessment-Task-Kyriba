@@ -39,6 +39,7 @@ class FooterModel(Base):
     __tablename__ = "footer"
     id: Mapped[int] = mapped_column(primary_key=True)
     total_counter: Mapped[int] = mapped_column() 
+    control_sum: Mapped[int] = mapped_column() 
 
     header_id: Mapped[int] = mapped_column(ForeignKey("header.id"))
     header: Mapped["HeaderModel"] = relationship(back_populates="footer", 
