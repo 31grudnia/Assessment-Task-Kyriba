@@ -1,5 +1,15 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 from librarian.database.models.file import HeaderModel, TransactionModel, FooterModel
+
+
+def get_all_files(db: Session):
+    query = (db.query(HeaderModel)
+             .options(joinedload(HeaderModel.footer))
+             .options(selectinload(HeaderModel.transactions))
+             .order_by(HeaderModel.id)
+             .all())
+    
+    return query
 
 
 def get_file_section(db: Session, file_id: int, section_id: int):
@@ -36,6 +46,7 @@ def get_file_field(db: Session, file_id: int, field_value: str):
         return [getattr(t, field_value) for t in header_obj.transactions]
 
     raise ValueError(f"Field {field_value} does NOT exist!")
+
 
     
 

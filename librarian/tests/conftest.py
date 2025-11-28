@@ -28,41 +28,48 @@ def db_session():
 
 @pytest.fixture(scope="function")
 def seeded_db(db_session):
-    header = HeaderModel(
-        name="John",
-        surname="Doe",
-        patronymic="A.",
-        address="123 Test St"
-    )
-    db_session.add(header)
-    db_session.flush()
-    amount_1 = 100
-    amount_2 = 200
-    total_sum = amount_1 + amount_2
-
-    footer = FooterModel(
-        total_counter=2,
-        control_sum=total_sum,
-        header=header
-    )
-    db_session.add(footer)
+    header1 = HeaderModel(name="John",
+                          surname="Doe",
+                          patronymic="A.",
+                          address="123 Test St")
+    db_session.add(header1)
     db_session.flush()
 
-    tx1 = TransactionModel(
-        counter=1,
-        amount=amount_1,
-        currency=Currency.USD,
-        header=header,
-        footer=footer
-    )
-    tx2 = TransactionModel(
-        counter=2,
-        amount=amount_2,
-        currency=Currency.EUR,
-        header=header,
-        footer=footer
-    )
-    db_session.add_all([tx1, tx2])
-    db_session.commit()
+    footer1 = FooterModel(total_counter=2, 
+                          control_sum=300, 
+                          header=header1)
+    db_session.add(footer1)
+
+    tx1_1 = TransactionModel(counter=1, 
+                             amount=100, 
+                             currency=Currency.USD, 
+                             header=header1, 
+                             footer=footer1)
+    tx1_2 = TransactionModel(counter=2, 
+                             amount=200, 
+                             currency=Currency.EUR, 
+                             header=header1, 
+                             footer=footer1)
+    db_session.add_all([tx1_1, tx1_2])
+
+    header2 = HeaderModel(name="Alice", 
+                          surname="Wonder", 
+                          patronymic="B.", 
+                          address="456 Land")
+    db_session.add(header2)
+    db_session.flush()
+
+    footer2 = FooterModel(total_counter=1, 
+                          control_sum=500, 
+                          header=header2)
+    db_session.add(footer2)
+
+    tx2_1 = TransactionModel(counter=1, 
+                             amount=500, 
+                             currency=Currency.USD, 
+                             header=header2, 
+                             footer=footer2)
+    db_session.add(tx2_1)
     
+    db_session.commit()
     return db_session

@@ -1,7 +1,30 @@
 import pytest
 
-from librarian.database.models.file import HeaderModel, FooterModel, TransactionModel
-from librarian.src.crud import get_file_section, get_file_field
+from librarian.database.models.file import HeaderModel, FooterModel
+from librarian.src.crud import get_all_files, get_file_section, get_file_field
+
+
+# Get all files
+def test_get_all_files(seeded_db):
+    files = get_all_files(seeded_db)
+
+    assert len(files) == 2
+
+    file_1 = files[0]
+    file_2 = files[1]
+
+    assert file_1.id < file_2.id
+    assert file_1.name == "John"
+    assert file_2.name == "Alice"
+
+    assert file_1.footer.total_counter == 2
+    assert len(file_1.transactions) == 2
+    assert file_1.transactions[0].amount == 100
+
+    assert file_2.footer.total_counter == 1
+    assert len(file_2.transactions) == 1
+    assert file_2.transactions[0].amount == 500
+
 
 # Get section tests
 def test_get_file_section_header(seeded_db):
@@ -25,6 +48,7 @@ def test_get_file_section_invalid_id(seeded_db):
     with pytest.raises(ValueError) as excinfo:
         get_file_section(seeded_db, file_id=1, section_id=99)
     assert "Invalid section" in str(excinfo.value)
+
 
 # Get field_value tests
 def test_get_field_from_header(seeded_db):
