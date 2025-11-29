@@ -2,7 +2,7 @@ import pytest
 
 from librarian.database.models.file import HeaderModel, FooterModel
 from librarian.database.models.readonly_columns import ReadonlyColumns
-from librarian.src.crud import update_file_field
+from librarian.src.crud import update_file_field, set_field_readonly
 
 
 def test_update_header_field(seeded_db):
@@ -81,3 +81,19 @@ def test_can_unlock_and_update_field(seeded_db):
     update_file_field(seeded_db, 1, "address", "New Addr", None)
     header = seeded_db.get(HeaderModel, 1)
     assert header.address == "New Addr"
+
+def test_set_field_readonly(seeded_db):
+    set_field_readonly(seeded_db, "name", True)
+    
+    config = seeded_db.query(ReadonlyColumns).first()
+    assert config.name is True
+
+    set_field_readonly(seeded_db, "name", False)
+    
+    seeded_db.refresh(config)
+    assert config.name is False
+
+def test_set_readonly_invalid_field(seeded_db):
+    with pytest.raises(ValueError) as exc:
+        set_field_readonly(seeded_db, "non_existent_field", True)    
+    assert "is not valid" in str(exc.value)

@@ -4,6 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from librarian.database.models.file import HeaderModel, TransactionModel, FooterModel
+from librarian.database.models.readonly_columns import ReadonlyColumns
 from librarian.src.helpers import validate_field_is_mutable
 
 
@@ -153,6 +154,16 @@ def update_file_field(db: Session, file_id: int, field_value: str, new_value: An
     if transaction_id is not None:
         raise ValueError(f"Transaction with id:{transaction_id} does NOT exist!")
     raise ValueError(f"Field {field_value} does NOT exist!")
+
+def set_field_readonly(db: Session, field_name: str, is_readonly: bool):
+    config = db.query(ReadonlyColumns).first()
+    
+    if not hasattr(config, field_name):
+        raise ValueError(f"Field '{field_name}' is not valid for configuration.")
+
+    setattr(config, field_name, is_readonly)
+    db.commit()
+    return config
 
 # DELETE
 def delete_file_by_id(db: Session, file_id: int):
