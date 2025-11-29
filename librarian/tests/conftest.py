@@ -1,10 +1,10 @@
 import pytest
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from librarian.database.database import Base
 from librarian.database.models.file import HeaderModel, FooterModel, TransactionModel, Currency
+from librarian.database.models.readonly_columns import ReadonlyColumns
 
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
@@ -25,9 +25,10 @@ def db_session():
     session.close()
     Base.metadata.drop_all(bind=engine)
 
-
 @pytest.fixture(scope="function")
 def seeded_db(db_session):
+    db_session.add(ReadonlyColumns()) 
+
     header1 = HeaderModel(name="John",
                           surname="Doe",
                           patronymic="A.",

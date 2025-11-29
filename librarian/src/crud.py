@@ -2,7 +2,10 @@ from typing import Optional, Any, Dict
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
+
 from librarian.database.models.file import HeaderModel, TransactionModel, FooterModel
+from librarian.src.helpers import validate_field_is_mutable
+
 
 # POST 
 def add_file(db: Session, header_data: Dict[str, Any], transaction_data: Dict[str, Any]):
@@ -86,7 +89,7 @@ def get_file_section(db: Session, file_id: int, section_id: int):
     if section_id == 3:
         return db.query(FooterModel).filter(FooterModel.header_id == file_id).first()
     
-# UPDATE
+
 def get_file_field(db: Session, file_id: int, field_value: str):
     models = [HeaderModel, FooterModel, TransactionModel]
     field_exists = any(hasattr(m, field_value) for m in models)
@@ -108,8 +111,10 @@ def get_file_field(db: Session, file_id: int, field_value: str):
 
     raise ValueError(f"Field {field_value} does NOT exist!")
 
-
+# UPDATE
 def update_file_field(db: Session, file_id: int, field_value: str, new_value: Any, transaction_id: Optional[int]):
+    validate_field_is_mutable(db, field_value)
+
     header_obj = db.get(HeaderModel, file_id)
     if not header_obj:
         raise ValueError(f"File with id:{file_id} does NOT exist!")

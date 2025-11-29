@@ -7,8 +7,10 @@ from logger.logger import setup_logger
 from librarian.config import DATABASE_URL
 from librarian.database.database import Base
 from librarian.database.models.file import HeaderModel, FooterModel, TransactionModel, Currency
+from librarian.database.models.readonly_columns import ReadonlyColumns
 
 logger = setup_logger("database_init")
+
 
 def init_db():
     logger.info("Starting database initialization")
@@ -21,6 +23,8 @@ def init_db():
     
     Session = sessionmaker(bind=engine)
     session = Session()
+    logger.info("Seeding default ReadonlyColumns configuration")
+    session.add(ReadonlyColumns())
 
     users = [
         ("John", "Doe", "A."),
