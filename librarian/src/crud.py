@@ -1,3 +1,6 @@
+from typing import Optional, Any
+
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
 from librarian.database.models.file import HeaderModel, TransactionModel, FooterModel
 
@@ -58,3 +61,42 @@ def get_file_field(db: Session, file_id: int, field_value: str):
     raise ValueError(f"Field {field_value} does NOT exist!")
 
 
+def update_file_field(db: Session, file_id: int, field_value: str, new_value: Any, transaction_id: Optional[int]):
+    header_obj = db.get(HeaderModel, file_id)
+    if not header_obj:
+        raise ValueError(f"File with id:{file_id} does NOT exist!")
+    
+    if (transaction_id is not None and 
+        hasattr(TransactionModel, field_value)):
+        transaction_obj = (db.query(TransactionModel)
+                           .filter_by(counter=transaction_id, header_id=file_id)
+                           .first())
+        
+        if not transaction_obj:
+            raise ValueError(f"Transaction with id:{transaction_id} does NOT exist!")
+        
+        setattr(transaction_obj, field_value, new_value)
+        db.flush()
+
+        if field_value == "amount":
+            transactions_amount = (db.query(func.sum(TransactionModel.amount))
+                                   .filter(TransactionModel.header_id==file_id)
+                                   .scalar())
+            db.query(FooterModel).filter_by(header_id=file_id).update({"control_sum": transactions_amount})
+        
+        db.commit()
+        return transaction_obj
+
+    if hasattr(header_obj, field_value):
+        setattr(header_obj, field_value, new_value)
+        db.commit()
+        return header_obj
+    
+    if hasattr(header_obj.footer, field_value):
+        setattr(header_obj.footer, field_value, new_value)
+        db.commit()
+        return header_obj.footer
+
+    if transaction_id is not None:
+        raise ValueError(f"Transaction with id:{transaction_id} does NOT exist!")
+    raise ValueError(f"Field {field_value} does NOT exist!")
