@@ -1,10 +1,58 @@
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
 from librarian.database.models.file import HeaderModel, TransactionModel, FooterModel
 
-# GET
+# POST 
+def add_file(db: Session, header_data: Dict[str, Any], transaction_data: Dict[str, Any]):
+    header = HeaderModel(**header_data)
+    db.add(header)
+    db.flush()
+
+    footer = FooterModel(
+        total_counter=1,
+        control_sum=transaction_data["amount"],
+        header_id=header.id
+    )
+    db.add(footer)
+    db.flush()
+
+    transaction = TransactionModel(
+        counter=1,
+        amount=transaction_data["amount"],
+        currency=transaction_data["currency"],
+        header_id=header.id,
+        footer_id=footer.id
+    )
+    db.add(transaction)
+    db.commit()
+    return header
+
+
+def add_transaction_to_file(db: Session, file_id: int, transaction_data: Dict[str, Any]):
+    header_obj = db.get(HeaderModel, file_id)
+    if not header_obj:
+        raise ValueError(f"File with id:{file_id} does NOT exist!")
+    
+    footer_obj = header_obj.footer
+    footer_obj.total_counter += 1
+    footer_obj.control_sum += transaction_data["amount"]
+
+    new_transaction = TransactionModel(
+        counter=footer_obj.total_counter,
+        amount=transaction_data["amount"],
+        currency=transaction_data["currency"],
+        header_id=header_obj.id,
+        footer_id=footer_obj.id
+    )
+
+    db.add(new_transaction)
+    db.commit()
+    return new_transaction
+
+
+# READ
 def get_all_files(db: Session):
     query = (db.query(HeaderModel)
              .options(joinedload(HeaderModel.footer))
