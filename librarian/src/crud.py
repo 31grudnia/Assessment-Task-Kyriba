@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
 from librarian.database.models.file import HeaderModel, TransactionModel, FooterModel
 
-
+# GET
 def get_all_files(db: Session):
     query = (db.query(HeaderModel)
              .options(joinedload(HeaderModel.footer))
@@ -38,7 +38,7 @@ def get_file_section(db: Session, file_id: int, section_id: int):
     if section_id == 3:
         return db.query(FooterModel).filter(FooterModel.header_id == file_id).first()
     
-
+# UPDATE
 def get_file_field(db: Session, file_id: int, field_value: str):
     models = [HeaderModel, FooterModel, TransactionModel]
     field_exists = any(hasattr(m, field_value) for m in models)
@@ -100,3 +100,12 @@ def update_file_field(db: Session, file_id: int, field_value: str, new_value: An
     if transaction_id is not None:
         raise ValueError(f"Transaction with id:{transaction_id} does NOT exist!")
     raise ValueError(f"Field {field_value} does NOT exist!")
+
+# DELETE
+def delete_file_by_id(db: Session, file_id: int):
+    file_obj = db.get(HeaderModel, file_id)
+    if not file_obj:
+        raise ValueError(f"File with id:{file_id} does NOT exist!")
+    
+    db.delete(file_obj)
+    db.commit()

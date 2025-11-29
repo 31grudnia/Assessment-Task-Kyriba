@@ -1,6 +1,6 @@
 import pytest
 
-from librarian.database.models.file import HeaderModel, FooterModel, TransactionModel
+from librarian.database.models.file import HeaderModel, FooterModel
 from librarian.src.crud import update_file_field
 
 
