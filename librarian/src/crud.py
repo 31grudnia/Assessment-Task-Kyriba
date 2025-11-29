@@ -109,3 +109,21 @@ def delete_file_by_id(db: Session, file_id: int):
     
     db.delete(file_obj)
     db.commit()
+
+
+def delete_transaction_by_id(db: Session, file_id: int, transaction_id: int):
+    transaction_obj = (db.query(TransactionModel)
+                       .filter_by(counter=transaction_id, header_id=file_id)
+                       .first())
+        
+    if not transaction_obj:
+        raise ValueError(f"Transaction with id:{transaction_id} does NOT exist!")
+    
+    db.delete(transaction_obj)
+    db.flush()
+
+    transactions_amount = (db.query(func.sum(TransactionModel.amount))
+                                   .filter(TransactionModel.header_id==file_id)
+                                   .scalar())
+    db.query(FooterModel).filter_by(header_id=file_id).update({"control_sum": transactions_amount})
+    db.commit()
