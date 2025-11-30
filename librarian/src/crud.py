@@ -5,11 +5,14 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from librarian.database.models.file import HeaderModel, TransactionModel, FooterModel
 from librarian.database.models.readonly_columns import ReadonlyColumns
-from librarian.src.helpers import validate_field_is_mutable
+from librarian.src.helpers import validate_field_is_mutable, validate_amount_data, validate_currency_data
 
 
 # POST 
 def add_file(db: Session, header_data: Dict[str, Any], transaction_data: Dict[str, Any]):
+    validate_amount_data(transaction_data["amount"])
+    currency_enum = validate_currency_data(transaction_data["currency"])
+
     header = HeaderModel(**header_data)
     db.add(header)
     db.flush()
@@ -25,7 +28,7 @@ def add_file(db: Session, header_data: Dict[str, Any], transaction_data: Dict[st
     transaction = TransactionModel(
         counter=1,
         amount=transaction_data["amount"],
-        currency=transaction_data["currency"],
+        currency=currency_enum,
         header_id=header.id,
         footer_id=footer.id
     )
@@ -35,6 +38,9 @@ def add_file(db: Session, header_data: Dict[str, Any], transaction_data: Dict[st
 
 
 def add_transaction_to_file(db: Session, file_id: int, transaction_data: Dict[str, Any]):
+    validate_amount_data(transaction_data["amount"])
+    currency_enum = validate_currency_data(transaction_data["currency"])
+
     header_obj = db.get(HeaderModel, file_id)
     if not header_obj:
         raise ValueError(f"File with id:{file_id} does NOT exist!")
@@ -46,7 +52,7 @@ def add_transaction_to_file(db: Session, file_id: int, transaction_data: Dict[st
     new_transaction = TransactionModel(
         counter=footer_obj.total_counter,
         amount=transaction_data["amount"],
-        currency=transaction_data["currency"],
+        currency=currency_enum,
         header_id=header_obj.id,
         footer_id=footer_obj.id
     )
@@ -115,6 +121,11 @@ def get_file_field(db: Session, file_id: int, field_value: str):
 # UPDATE
 def update_file_field(db: Session, file_id: int, field_value: str, new_value: Any, transaction_id: Optional[int]):
     validate_field_is_mutable(db, field_value)
+
+    if field_value == "amount":
+        validate_amount_data(new_value)
+    elif field_value == "currency":
+        new_value = validate_currency_data(new_value)
 
     header_obj = db.get(HeaderModel, file_id)
     if not header_obj:
