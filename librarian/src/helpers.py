@@ -9,6 +9,7 @@ def validate_field_is_mutable(db: Session, field_name: str):
     if config and getattr(config, field_name, False):
         raise ValueError(f"Field {field_name} IS readonly!")
 
+
 def validate_amount_data(amount: int):
     if not isinstance(amount, int):
          raise ValueError("Amount must be an integer.")
